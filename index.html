@@ -70,7 +70,7 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            transition: opacity 0.5s ease, visibility 0.5s ease;
+            transition: opacity 0.4s ease, visibility 0.4s ease;
         }
 
         .spinner {
@@ -97,8 +97,8 @@
             gap: 24px;
             z-index: 1;
             opacity: 0;
-            transform: translateY(20px);
-            animation: fadeInUp 0.8s forwards ease 0.2s;
+            transform: translateY(15px);
+            animation: fadeInUp 0.6s forwards ease 0.1s;
         }
 
         @keyframes fadeInUp {
@@ -559,13 +559,13 @@
 
     <script>
         /* =======================================================
-           EASY CONFIGURATION OBJECT (UBAH DATA DI SINI)
+           EASY CONFIGURATION OBJECT (UBAH DATA KAMU DI SINI)
         ======================================================= */
         const CONFIG = {
-            username: "Mileven",
+            username: "Rion",
             bio: "Developer & Digital Creator. Crafting clean interfaces, glassmorphism UI, and custom experiences.",
             avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500&auto=format&fit=crop&q=80",
-            status: "idle", // Options: "online", "idle", "offline"
+            status: "online", // Options: "online", "idle", "offline"
             accentColor: "#6366f1",
             bgUrl: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=1600&auto=format&fit=crop&q=80",
             bgBlur: 16,        // dalam pixel
@@ -612,11 +612,178 @@
         };
 
         /* =======================================================
-           APPLICATION CORE ENGINE (NO NEED TO EDIT BELOW)
+           APPLICATION CORE ENGINE
         ======================================================= */
         let currentTrackIdx = 0;
         let isPlaying = false;
 
         const audio = document.getElementById('audioPlayer');
         const playBtn = document.getElementById('playBtn');
-    
+        const playIcon = document.getElementById('playIcon');
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+        const progressBar = document.getElementById('progressBar');
+        const progressFill = document.getElementById('progressFill');
+        const currentTimeEl = document.getElementById('currentTime');
+        const durationEl = document.getElementById('duration');
+        const volumeSlider = document.getElementById('volumeSlider');
+        const playingBars = document.getElementById('playingBars');
+
+        function hideLoader() {
+            const loader = document.getElementById('loader');
+            if (loader) {
+                loader.style.opacity = '0';
+                loader.style.visibility = 'hidden';
+            }
+        }
+
+        function initApp() {
+            // Force Hilangkan Loader
+            setTimeout(hideLoader, 200);
+
+            // Populate Profile Data
+            document.getElementById('displayUsername').textContent = CONFIG.username;
+            document.getElementById('displayBio').textContent = CONFIG.bio;
+            document.getElementById('displayAvatar').src = CONFIG.avatar;
+
+            // Status Badge
+            const statusBadge = document.getElementById('displayStatus');
+            const statusColors = { online: '#10b981', idle: '#f59e0b', offline: '#6b7280' };
+            const color = statusColors[CONFIG.status] || statusColors.online;
+            statusBadge.style.backgroundColor = color;
+            statusBadge.style.boxShadow = `0 0 10px ${color}`;
+
+            // Theme & Style Settings
+            document.documentElement.style.setProperty('--accent-color', CONFIG.accentColor);
+            document.documentElement.style.setProperty('--accent-glow', CONFIG.accentColor + '66');
+            document.documentElement.style.setProperty('--bg-blur', CONFIG.bgBlur + 'px');
+            document.documentElement.style.setProperty('--overlay-opacity', CONFIG.bgOpacity);
+            document.getElementById('bgContainer').style.backgroundImage = `url('${CONFIG.bgUrl}')`;
+
+            // Social Media Links
+            document.getElementById('linkRoblox').href = CONFIG.socials.roblox;
+            document.getElementById('linkDiscord').href = CONFIG.socials.discord;
+            document.getElementById('linkSpotify').href = CONFIG.socials.spotify;
+            document.getElementById('linkTelegram').href = CONFIG.socials.telegram;
+
+            // Render Games
+            document.getElementById('gamesList').innerHTML = CONFIG.games.map(g => `
+                <div class="item-card">
+                    <img src="${g.cover}" class="item-cover" alt="${g.name}">
+                    <div class="item-details">
+                        <div class="item-name">${g.name}</div>
+                        <div class="item-sub">${g.sub}</div>
+                    </div>
+                </div>
+            `).join('');
+
+            // Render Favorite Tracks
+            document.getElementById('musicList').innerHTML = CONFIG.favoriteTracks.map(m => `
+                <div class="item-card">
+                    <img src="${m.cover}" class="item-cover" alt="${m.title}">
+                    <div class="item-details">
+                        <div class="item-name">${m.title}</div>
+                        <div class="item-sub">${m.artist}</div>
+                    </div>
+                </div>
+            `).join('');
+
+            // Render Activities
+            document.getElementById('activityList').innerHTML = CONFIG.activities.map(a => `
+                <div class="timeline-item">
+                    <i class="${a.icon && a.icon.includes('fa-') ? (a.icon.includes('fa-brands') ? a.icon : 'fa-solid ' + a.icon) : 'fa-solid fa-circle-dot'} timeline-icon"></i>
+                    <div class="timeline-content">
+                        <div class="act-text">${a.text}</div>
+                        <div class="act-time">${a.time}</div>
+                    </div>
+                </div>
+            `).join('');
+
+            // Setup Track Audio
+            loadTrack(currentTrackIdx);
+        }
+
+        // Music Functions
+        function loadTrack(index) {
+            if (!CONFIG.playlist || CONFIG.playlist.length === 0) return;
+            const track = CONFIG.playlist[index];
+            document.getElementById('trackTitle').textContent = track.title;
+            document.getElementById('trackArtist').textContent = track.artist;
+            document.getElementById('trackCover').src = track.cover;
+            audio.src = track.url;
+        }
+
+        function playTrack() {
+            audio.play();
+            isPlaying = true;
+            playIcon.className = "fa-solid fa-pause";
+            playingBars.classList.add('active');
+        }
+
+        function pauseTrack() {
+            audio.pause();
+            isPlaying = false;
+            playIcon.className = "fa-solid fa-play";
+            playingBars.classList.remove('active');
+        }
+
+        playBtn.addEventListener('click', () => {
+            if (isPlaying) pauseTrack();
+            else playTrack();
+        });
+
+        prevBtn.addEventListener('click', () => {
+            currentTrackIdx = (currentTrackIdx - 1 + CONFIG.playlist.length) % CONFIG.playlist.length;
+            loadTrack(currentTrackIdx);
+            if (isPlaying) playTrack();
+        });
+
+        nextBtn.addEventListener('click', () => {
+            currentTrackIdx = (currentTrackIdx + 1) % CONFIG.playlist.length;
+            loadTrack(currentTrackIdx);
+            if (isPlaying) playTrack();
+        });
+
+        audio.addEventListener('timeupdate', () => {
+            if (audio.duration) {
+                const pct = (audio.currentTime / audio.duration) * 100;
+                progressFill.style.width = pct + '%';
+                
+                const curMins = Math.floor(audio.currentTime / 60);
+                const curSecs = Math.floor(audio.currentTime % 60);
+                const durMins = Math.floor(audio.duration / 60);
+                const durSecs = Math.floor(audio.duration % 60);
+
+                currentTimeEl.textContent = `${curMins}:${curSecs < 10 ? '0' : ''}${curSecs}`;
+                durationEl.textContent = `${durMins}:${durSecs < 10 ? '0' : ''}${durSecs}`;
+            }
+        });
+
+        audio.addEventListener('ended', () => {
+            nextBtn.click();
+        });
+
+        progressBar.addEventListener('click', (e) => {
+            const width = progressBar.clientWidth;
+            const clickX = e.offsetX;
+            audio.currentTime = (clickX / width) * audio.duration;
+        });
+
+        volumeSlider.addEventListener('input', (e) => {
+            audio.volume = e.target.value;
+        });
+
+        // Safe Initialization
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initApp);
+        } else {
+            initApp();
+        }
+
+        // Hard Safety Fallback
+        setTimeout(hideLoader, 1000);
+    </script>
+</body>
+</html>
+
+```
